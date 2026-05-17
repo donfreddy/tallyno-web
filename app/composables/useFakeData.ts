@@ -132,7 +132,7 @@ export function useFakeData() {
 // ─── Utils ────────────────────────────────────────────────────────────────────
 
 export function formatAmount(amount: number, currency = 'XAF'): string {
-  return new Intl.NumberFormat('fr-FR').format(amount) + ' ' + currency
+  return new Intl.NumberFormat('fr-FR', { currency, style: 'currency' }).format(amount)
 }
 
 export function formatDate(isoString: string): string {

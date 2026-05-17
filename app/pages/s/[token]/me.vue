@@ -36,9 +36,10 @@ useSeoMeta({
       <!-- Vue personnelle — ta part uniquement -->
       <div class="animate-slide-up">
         <!-- Badge "ta vue" -->
-        <div class="inline-flex items-center gap-1.5 bg-brand-50 border border-brand-200 rounded-full px-3 py-1.5 mb-4">
-          <span class="text-brand-500 text-xs">👤</span>
-          <span class="text-xs font-medium text-brand-600">Ton résumé personnel</span>
+        <div
+          class="inline-flex items-center gap-1.5 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5 mb-4">
+          <span class="text-purple-500 text-xs">👤</span>
+          <span class="text-xs font-medium text-purple-600">Ton résumé personnel</span>
         </div>
 
         <!-- Titre -->
@@ -86,9 +87,6 @@ useSeoMeta({
       <!-- Actions si pas settlé -->
       <div v-if="!myPart.settled" class="mt-5 space-y-4">
         <div class="animate-slide-up delay-200">
-          <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-            Rembourser {{ expense.payerName }}
-          </p>
           <PayDeepLink :payee-name="expense.payerName" :payee-phone="'+237691001001'" :amount="myPart.amount"
             :currency="expense.currency" />
         </div>
