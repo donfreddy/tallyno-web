@@ -30,7 +30,7 @@ const shareText = computed(() => {
 // Couleur du badge de balance
 function balanceColor(balance: number) {
   if (balance > 0) return 'text-emerald-600 bg-emerald-50 border-emerald-200'
-  if (balance < 0) return 'text-red-500 bg-red-50 border-red-200'
+  if (balance < 0) return 'text-rose-500 bg-rose-50 border-rose-200'
   return 'text-zinc-500 bg-zinc-50 border-zinc-200'
 }
 
@@ -61,7 +61,7 @@ function balanceSign(balance: number) {
         </h1>
         <p class="text-sm text-zinc-500 mt-1">
           {{ group.memberCount }} membres •
-          <span class="font-mono font-semibold text-purple-500">
+          <span class="font-mono font-semibold text-indigo-600">
             {{ formatAmount(group.totalExpenses, group.currency) }}
           </span>
           dépensés au total
@@ -86,7 +86,7 @@ function balanceSign(balance: number) {
               <div class="flex items-center gap-1.5">
                 <span class="text-sm font-semibold text-zinc-800">{{ m.name }}</span>
                 <span v-if="m.isMe"
-                  class="text-[10px] font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
+                  class="text-[10px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5">
                   toi
                 </span>
               </div>

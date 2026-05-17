@@ -11,8 +11,8 @@ useHead({
   }
 })
 
-const title = 'Tallyno: Track and settle debts easily'
-const description = 'Tallyno is a web platform for managing shared expenses and debts in Cameroon. It allows you to easily track who owes whom and how much, and to settle debts through mobile money.'
+const title = 'Tallyno: Shared expenses without disputes'
+const description = 'Tallyno is a web platform designed to simplify shared expenses and group debt management. Calculate who owes what, share clear summaries on WhatsApp, and settle debts via Mobile Money.'
 
 useSeoMeta({
   title,

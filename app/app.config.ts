@@ -1,8 +1,13 @@
 export default defineAppConfig({
   ui: {
     colors: {
-      primary: 'purple',
+      primary: 'indigo',
       neutral: 'zinc'
+    },
+    badge: {
+      defaultVariants: {
+        variant: 'subtle'
+      }
     }
   }
 })

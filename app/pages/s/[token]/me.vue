@@ -37,9 +37,9 @@ useSeoMeta({
       <div class="animate-slide-up">
         <!-- Badge "ta vue" -->
         <div
-          class="inline-flex items-center gap-1.5 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5 mb-4">
-          <span class="text-purple-500 text-xs">👤</span>
-          <span class="text-xs font-medium text-purple-600">Ton résumé personnel</span>
+          class="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 rounded-full px-3 py-1.5 mb-4">
+          <span class="text-indigo-600 text-xs">👤</span>
+          <span class="text-xs font-medium text-indigo-600">Ton résumé personnel</span>
         </div>
 
         <!-- Titre -->

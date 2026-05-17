@@ -2,7 +2,7 @@
 @import "@nuxt/ui";
 
 :root {
-  --font-sans: 'DM Sans', sans-serif;
+  --font-sans: 'DM Sans', 'Inter', 'Roboto', sans-serif;
   --font-mono: 'DM Mono', monospace;
 }
  

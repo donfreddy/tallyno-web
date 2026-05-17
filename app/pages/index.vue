@@ -35,7 +35,7 @@ const steps = [
 
       <h1 class="text-4xl font-bold text-zinc-900 tracking-tight leading-tight mb-4">
         Dépenses partagées<br>
-        <span class="text-purple-800">sans disputes</span>
+        <span class="text-indigo-600">sans disputes</span>
       </h1>
 
       <p class="text-base text-zinc-500 leading-relaxed mb-8 max-w-sm mx-auto">
@@ -46,7 +46,7 @@ const steps = [
       <!-- CTA buttons -->
       <div class="flex flex-col gap-3 max-w-xs mx-auto" id="download">
         <a href="#"
-          class="flex items-center justify-center gap-3 bg-purple-800 text-white rounded-2xl px-4 py-3 font-semibold hover:bg-purple-700 transition-colors">
+          class="flex items-center justify-center gap-3 bg-indigo-600 text-white rounded-2xl px-4 py-3 font-semibold hover:bg-indigo-700 transition-colors">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
             <path
               d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
@@ -167,8 +167,8 @@ const steps = [
       <div class="space-y-4">
         <div v-for="(step, i) in steps" :key="i" class="flex gap-4 animate-slide-up" :class="`delay-${(i + 1) * 100}`">
           <div
-            class="shrink-0 w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center">
-            <span class="text-xs font-bold font-mono text-purple-700">{{ step.num }}</span>
+            class="shrink-0 w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center">
+            <span class="text-xs font-bold font-mono text-indigo-600">{{ step.num }}</span>
           </div>
           <div class="pt-1">
             <h3 class="text-sm font-bold text-zinc-800 mb-0.5">{{ step.title }}</h3>
@@ -239,10 +239,10 @@ Géré avec <span class="font-medium">Tallyno</span></pre>
 
       <div class="flex flex-col gap-3 max-w-xs mx-auto">
         <UButton label="Télécharger Tallyno - Gratuit" size="xl" color="primary" variant="solid"
-          class="rounded-2xl cursor-pointer px-4 py-3 bg-purple-800 font-semibold hover:bg-purple-700 transition-colors"
+          class="rounded-2xl cursor-pointer px-4 py-3 bg-indigo-600 font-semibold hover:bg-indigo-700 transition-colors"
           block />
         <p class="text-xs text-zinc-400">
-          Disponible sur iOS & Android · Cameroun, Nigéria
+          Disponible sur iOS & Android • Cameroun
         </p>
       </div>
     </section>
