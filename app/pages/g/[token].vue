@@ -60,8 +60,8 @@ function balanceSign(balance: number) {
           {{ group.name }}
         </h1>
         <p class="text-sm text-zinc-500 mt-1">
-          {{ group.memberCount }} membres ·
-          <span class="font-mono font-semibold text-brand-500">
+          {{ group.memberCount }} membres •
+          <span class="font-mono font-semibold text-purple-500">
             {{ formatAmount(group.totalExpenses, group.currency) }}
           </span>
           dépensés au total
@@ -86,7 +86,7 @@ function balanceSign(balance: number) {
               <div class="flex items-center gap-1.5">
                 <span class="text-sm font-semibold text-zinc-800">{{ m.name }}</span>
                 <span v-if="m.isMe"
-                  class="text-[10px] font-medium text-brand-500 bg-brand-50 border border-brand-200 rounded-full px-1.5 py-0.5">
+                  class="text-[10px] font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
                   toi
                 </span>
               </div>
@@ -95,9 +95,9 @@ function balanceSign(balance: number) {
             </div>
 
             <!-- Balance badge -->
-            <div class="font-mono font-bold text-sm border rounded-lg px-2.5 py-1" :class="balanceColor(m.balance)">
+            <UBadge class="font-mono font-bold border rounded-lg" :class="balanceColor(m.balance)">
               {{ balanceSign(m.balance) }}{{ formatAmount(Math.abs(m.balance), group.currency) }}
-            </div>
+            </UBadge>
           </div>
         </div>
       </div>
