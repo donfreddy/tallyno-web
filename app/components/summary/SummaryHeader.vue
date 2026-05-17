@@ -18,7 +18,7 @@ const pendingAmount  = computed(() =>
     <!-- Pill catégorie -->
     <div class="flex items-center gap-2 mb-3">
       <span class="text-2xl leading-none">{{ expense.categoryEmoji }}</span>
-      <span class="text-xs font-medium text-slate-500 bg-slate-100 rounded-full px-2.5 py-1">
+      <span class="text-xs font-medium text-zinc-500 bg-zinc-100 rounded-full px-2.5 py-1">
         {{ expense.groupName }}
       </span>
       <span
@@ -30,7 +30,7 @@ const pendingAmount  = computed(() =>
     </div>
 
     <!-- Description + montant -->
-    <h1 class="text-2xl font-bold text-slate-900 tracking-tight leading-snug">
+    <h1 class="text-2xl font-bold text-zinc-900 tracking-tight leading-snug">
       {{ expense.description }}
     </h1>
 
@@ -41,8 +41,8 @@ const pendingAmount  = computed(() =>
     </div>
 
     <!-- Payeur + date -->
-    <p class="mt-2 text-sm text-slate-500">
-      Payé par <span class="font-semibold text-slate-700">{{ expense.payerName }}</span>
+    <p class="mt-2 text-sm text-zinc-500">
+      Payé par <span class="font-semibold text-zinc-700">{{ expense.payerName }}</span>
       · {{ date }}
     </p>
 

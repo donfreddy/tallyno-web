@@ -43,9 +43,9 @@ useSeoMeta({
 
         <!-- Titre -->
         <div class="text-2xl mb-1">{{ expense.categoryEmoji }}</div>
-        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ expense.description }}</h1>
-        <p class="text-sm text-slate-500 mt-1">
-          Groupe : <span class="font-medium text-slate-700">{{ expense.groupName }}</span>
+        <h1 class="text-2xl font-bold text-zinc-900 tracking-tight">{{ expense.description }}</h1>
+        <p class="text-sm text-zinc-500 mt-1">
+          Groupe : <span class="font-medium text-zinc-700">{{ expense.groupName }}</span>
         </p>
       </div>
 
@@ -86,7 +86,7 @@ useSeoMeta({
       <!-- Actions si pas settlé -->
       <div v-if="!myPart.settled" class="mt-5 space-y-4">
         <div class="animate-slide-up delay-200">
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
             Rembourser {{ expense.payerName }}
           </p>
           <PayDeepLink :payee-name="expense.payerName" :payee-phone="'+237691001001'" :amount="myPart.amount"
@@ -94,12 +94,12 @@ useSeoMeta({
         </div>
 
         <!-- Séparateur -->
-        <div class="h-px bg-slate-100" />
+        <div class="h-px bg-zinc-100" />
 
         <!-- CTA app pour marquer payé -->
-        <div class="animate-slide-up delay-300 bg-slate-50 rounded-2xl border border-slate-200 p-4">
-          <p class="text-sm font-semibold text-slate-800 mb-1">Une fois payé...</p>
-          <p class="text-xs text-slate-500 mb-3">
+        <div class="animate-slide-up delay-300 bg-zinc-50 rounded-2xl border border-zinc-200 p-4">
+          <p class="text-sm font-semibold text-zinc-800 mb-1">Une fois payé...</p>
+          <p class="text-xs text-zinc-500 mb-3">
             Ouvre Tallyno pour confirmer ton paiement à {{ expense.payerName }}.
             Il recevra une notification instantanée.
           </p>
@@ -111,8 +111,8 @@ useSeoMeta({
       <div v-else class="mt-5 animate-slide-up delay-200">
         <div class="text-center py-4">
           <p class="text-4xl mb-2">🎉</p>
-          <p class="text-sm font-semibold text-slate-700">Tu es à jour !</p>
-          <p class="text-xs text-slate-500 mt-1">
+          <p class="text-sm font-semibold text-zinc-700">Tu es à jour !</p>
+          <p class="text-xs text-zinc-500 mt-1">
             Ton paiement a été confirmé par {{ expense.payerName }}.
           </p>
         </div>

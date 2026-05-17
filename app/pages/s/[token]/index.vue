@@ -56,33 +56,33 @@ const shareText = computed(() => expense.value
       <SummaryHeader :expense="expense" />
 
       <!-- Séparateur -->
-      <div class="my-5 h-px bg-slate-100" />
+      <div class="my-5 h-px bg-zinc-100" />
 
       <!-- Liste participants — SOCIAL : pas de montants individuels -->
       <div class="animate-slide-up delay-100">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+        <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
           Participants ({{ expense.participants.length }})
         </p>
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm divide-y divide-slate-50 overflow-hidden">
+        <div class="bg-white rounded-2xl border border-zinc-100 shadow-sm divide-y divide-zinc-50 overflow-hidden">
           <div v-for="p in expense.participants" :key="p.id" class="px-4">
             <DebtLine :participant="p" :currency="expense.currency" :show-amount="false" />
           </div>
         </div>
 
         <!-- Note confidentialité -->
-        <p class="text-[11px] text-slate-400 text-center mt-2.5 flex items-center justify-center gap-1">
+        <p class="text-[11px] text-zinc-400 text-center mt-2.5 flex items-center justify-center gap-1">
           <span>🔒</span>
           Les montants individuels sont privés · Voir ta part via ton lien personnel
         </p>
       </div>
 
       <!-- Séparateur -->
-      <div class="my-5 h-px bg-slate-100" />
+      <div class="my-5 h-px bg-zinc-100" />
 
       <!-- CTA paiement - si je suis participant non-settlé -->
       <div class="space-y-4">
         <div class="animate-slide-up delay-200">
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
             Rembourser
           </p>
           <PayDeepLink :payee-name="expense.payerName" :payee-phone="'+237691001001'"
@@ -90,18 +90,18 @@ const shareText = computed(() => expense.value
         </div>
 
         <!-- Séparateur -->
-        <div class="h-px bg-slate-100" />
+        <div class="h-px bg-zinc-100" />
 
         <!-- Partage -->
         <div class="animate-slide-up delay-300">
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
             Relancer le groupe
           </p>
           <ShareSummary :share-url="shareUrl" :share-text="shareText" label="Partager le résumé" />
         </div>
 
         <!-- Séparateur -->
-        <div class="h-px bg-slate-100" />
+        <div class="h-px bg-zinc-100" />
 
         <!-- Download banner -->
         <DownloadAppBanner />

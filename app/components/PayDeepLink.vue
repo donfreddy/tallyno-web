@@ -50,10 +50,10 @@ function openLink(link: string, fallback: string) {
 <template>
   <div class="animate-slide-up delay-200">
     <div class="mb-3">
-      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+      <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
         Rembourser {{ payeeName }}
       </p>
-      <p class="text-sm text-slate-600">
+      <p class="text-sm text-zinc-600">
         <span class="font-bold font-mono text-brand-500">{{ fmt(amount) }} {{ currency }}</span>
         · {{ payeePhone }}
       </p>
@@ -75,7 +75,7 @@ function openLink(link: string, fallback: string) {
       </button>
     </div>
 
-    <p class="text-[10px] text-slate-400 text-center mt-3">
+    <p class="text-[10px] text-zinc-400 text-center mt-3">
       L'argent va directement à {{ payeeName }}. Tallyno ne touche pas aux fonds.
     </p>
   </div>

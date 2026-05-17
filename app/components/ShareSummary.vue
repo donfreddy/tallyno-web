@@ -54,7 +54,7 @@ const waLink = computed(() =>
 
     <!-- Bouton copier lien -->
     <button
-      class="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-600 text-sm font-medium rounded-xl px-4 py-3 hover:bg-slate-50 transition-all"
+      class="w-full flex items-center justify-center gap-2 border border-zinc-200 text-zinc-600 text-sm font-medium rounded-xl px-4 py-3 hover:bg-zinc-50 transition-all"
       @click="copyToClipboard">
       <span v-if="copied">✓ Lien copié !</span>
       <span v-else>🔗 Copier le lien</span>
