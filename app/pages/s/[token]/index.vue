@@ -72,19 +72,18 @@ const shareText = computed(() => expense.value
         <!-- Note confidentialité -->
         <p class="text-[11px] text-zinc-400 text-center mt-2.5 flex items-center justify-center gap-1">
           <span>🔒</span>
-          Les montants individuels sont privés · Voir ta part via ton lien personnel
+          Les montants individuels sont privés • Voir ta part via ton lien personnel
         </p>
       </div>
-
       <!-- Séparateur -->
       <div class="my-5 h-px bg-zinc-100" />
 
       <!-- CTA paiement - si je suis participant non-settlé -->
       <div class="space-y-4">
         <div class="animate-slide-up delay-200">
-          <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+          <!-- <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
             Rembourser
-          </p>
+          </p> -->
           <PayDeepLink :payee-name="expense.payerName" :payee-phone="'+237691001001'"
             :amount="expense.participants[0]!.amount" :currency="expense.currency" />
         </div>
