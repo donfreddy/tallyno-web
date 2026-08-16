@@ -27,5 +27,10 @@ export default defineNuxtConfig({
   },
   colorMode: {
     preference: 'light'
-  }
+  },
+  runtimeConfig: {
+    // Base URL of the NestJS API (used by the server/ proxy routes).
+    // Override with API_BASE_URL env var.
+    apiBase: process.env.API_BASE_URL || 'http://localhost:3000',
+  },
 })

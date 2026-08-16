@@ -1,15 +1,11 @@
 <script setup lang="ts">
-import { useFakeData, formatAmount } from '~/composables/useFakeData'
-
 const route = useRoute()
 const token = route.params.token as string
-const { getExpenseByToken } = useFakeData()
+const { getExpenseSummary } = useSummary()
 
-// SSR — server:true est simulé ici avec l'await au top-level
-// En prod : useFetch(`/api/summary/${token}`, { server: true })
 const { data: expense, pending, error } = await useAsyncData(
   `expense-${token}`,
-  () => getExpenseByToken(token),
+  () => getExpenseSummary(token),
 )
 
 // Open Graph — SSR pour que WhatsApp les lise dans le HTML initial
@@ -23,18 +19,17 @@ useSeoMeta({
     : '',
   ogTitle: () => expense.value ? `💰 ${expense.value.description} — ${formatAmount(expense.value.totalAmount, expense.value.currency)}` : 'Tallyno',
   ogDescription: () => expense.value
-    ? `Payé par ${expense.value.payerName} · ${pendingCount.value} personne${pendingCount.value > 1 ? 's' : ''} doit encore rembourser`
+    ? `Payé par ${expense.value.payerName} · ${pendingCount.value} personne${pendingCount.value > 1 ? 's' : ''} ${pendingCount.value > 1 ? 'doivent' : 'doit'} encore rembourser`
     : '',
   ogImage: 'https://tallyno.app/og-default.png',
   twitterCard: 'summary',
 })
 
-// Share data pour WhatsApp
-const shareUrl = `https://tallyno.app/s/${token}`
-const shareText = computed(() => expense.value
-  ? `${expense.value.categoryEmoji} ${expense.value.description}\n\nTotal : ${formatAmount(expense.value.totalAmount, expense.value.currency)} · Payé par ${expense.value.payerName}\n⏳ ${pendingCount.value} paiement${pendingCount.value > 1 ? 's' : ''} en attente · Voir ta part 👇`
-  : ''
-)
+// Privacy : seuls les niveaux DETAILED exposent les montants individuels
+const showAmounts = computed(() => expense.value?.level === 'DETAILED')
+const shareUrl = computed(() => expense.value?.shareUrl ?? `https://tallyno.app/s/${token}`)
+const shareText = computed(() => expense.value?.shareText || 'Dépense partagée sur Tallyno')
+const meUrl = computed(() => `/s/${token}/me`)
 </script>
 
 <template>
@@ -58,41 +53,37 @@ const shareText = computed(() => expense.value
       <!-- Séparateur -->
       <div class="my-5 h-px bg-zinc-100" />
 
-      <!-- Liste participants — SOCIAL : pas de montants individuels -->
+      <!-- Liste participants -->
       <div class="animate-slide-up delay-100">
         <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
           Participants ({{ expense.participants.length }})
         </p>
         <div class="bg-white rounded-2xl border border-zinc-100 shadow-sm divide-y divide-zinc-50 overflow-hidden">
           <div v-for="p in expense.participants" :key="p.id" class="px-4">
-            <DebtLine :participant="p" :currency="expense.currency" :show-amount="false" />
+            <DebtLine :participant="p" :currency="expense.currency" :show-amount="showAmounts" />
           </div>
         </div>
 
         <!-- Note confidentialité -->
-        <p class="text-[11px] text-zinc-400 text-center mt-2.5 flex items-center justify-center gap-1">
+        <p v-if="!showAmounts" class="text-[11px] text-zinc-400 text-center mt-2.5 flex items-center justify-center gap-1">
           <span>🔒</span>
           Les montants individuels sont privés • Voir ta part via ton lien personnel
         </p>
       </div>
+
       <!-- Séparateur -->
       <div class="my-5 h-px bg-zinc-100" />
 
-      <!-- CTA paiement - si je suis participant non-settlé -->
+      <!-- Actions -->
       <div class="space-y-4">
-        <div class="animate-slide-up delay-200">
-          <!-- <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-            Rembourser
-          </p> -->
-          <PayDeepLink :payee-name="expense.payerName" :payee-phone="'+237691001001'"
-            :amount="expense.participants[0]!.amount" :currency="expense.currency" />
-        </div>
-
-        <!-- Séparateur -->
-        <div class="h-px bg-zinc-100" />
+        <!-- Voir ma part -->
+        <NuxtLink :to="meUrl"
+          class="w-full flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-semibold text-sm rounded-xl px-4 py-3.5 transition-colors animate-slide-up delay-100">
+          👤 Voir ma part
+        </NuxtLink>
 
         <!-- Partage -->
-        <div class="animate-slide-up delay-300">
+        <div class="animate-slide-up delay-200">
           <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
             Relancer le groupe
           </p>

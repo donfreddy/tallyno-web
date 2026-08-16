@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import type { Participant } from '~/composables/useFakeData'
-import { formatAmount, getInitials, getAvatarColor } from '~/composables/useFakeData'
+import type { PublicParticipant } from '~/types/summary'
 
 const props = defineProps<{
-  participant: Participant
+  participant: PublicParticipant
   currency: string
   showAmount: boolean   // false en mode SOCIAL (privacy)
 }>()

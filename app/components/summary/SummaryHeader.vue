@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { ExpenseSummary } from '~/composables/useFakeData'
-import { formatAmount, formatDate } from '~/composables/useFakeData'
+import type { PublicExpenseSummary } from '~/types/summary'
 
-const props = defineProps<{ expense: ExpenseSummary }>()
+const props = defineProps<{ expense: PublicExpenseSummary }>()
 
 const date = computed(() => formatDate(props.expense.date))
 const total = computed(() => formatAmount(props.expense.totalAmount, props.expense.currency))

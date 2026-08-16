@@ -1,33 +1,32 @@
 <script setup lang="ts">
-import { useFakeData, formatAmount, getInitials, getAvatarColor } from '~/composables/useFakeData'
-
 const route = useRoute()
 const token = route.params.token as string
-const { getGroupByToken } = useFakeData()
+const { getGroupSummary } = useSummary()
 
 const { data: group, pending, error } = await useAsyncData(
   `group-${token}`,
-  () => getGroupByToken(token),
+  () => getGroupSummary(token),
 )
 
 useSeoMeta({
-  title: () => group.value ? `Bilan · ${group.value.name}` : 'Tallyno',
-  ogTitle: () => group.value ? `📊 ${group.value.name} — Bilan des dépenses` : 'Tallyno',
+  title: () => group.value ? `Bilan · ${group.value.groupName}` : 'Tallyno',
+  ogTitle: () => group.value ? `📊 ${group.value.groupName} — Bilan des dépenses` : 'Tallyno',
   ogDescription: () => group.value
     ? `${formatAmount(group.value.totalExpenses, group.value.currency)} dépensés · ${group.value.memberCount} membres`
     : '',
+  ogImage: 'https://tallyno.app/og-default.png',
 })
 
-const shareUrl = `https://tallyno.app/g/${token}`
-const shareText = computed(() => {
-  if (!group.value) return ''
-  const debts = group.value.simplifiedDebts
-    .map(d => `  ${d.fromName} → ${d.toName} : ${formatAmount(d.amount, group.value!.currency)}`)
-    .join('\n')
-  return `📊 Groupe "${group.value.name}" — Bilan\n\n💰 Total : ${formatAmount(group.value.totalExpenses, group.value.currency)}\n\n💸 Pour solder :\n${debts}`
-})
+// Privacy : les balances individuelles ne sont visibles qu'en DETAILED/PRIVATE
+const showBalances = computed(() => (group.value?.level ?? 'SOCIAL') !== 'SOCIAL')
 
-// Couleur du badge de balance
+const shareUrl = computed(() => group.value?.shareUrl ?? `https://tallyno.app/g/${token}`)
+const shareText = computed(() => group.value?.shareText ?? '')
+
+function balanceOf(member: { balance?: number }): number {
+  return member.balance ?? 0
+}
+
 function balanceColor(balance: number) {
   if (balance > 0) return 'text-emerald-600 bg-emerald-50 border-emerald-200'
   if (balance < 0) return 'text-rose-500 bg-rose-50 border-rose-200'
@@ -57,7 +56,7 @@ function balanceSign(balance: number) {
           </span>
         </div>
         <h1 class="text-2xl font-bold text-zinc-900 tracking-tight">
-          {{ group.name }}
+          {{ group.groupName }}
         </h1>
         <p class="text-sm text-zinc-500 mt-1">
           {{ group.memberCount }} membres •
@@ -83,27 +82,22 @@ function balanceSign(balance: number) {
 
             <!-- Nom -->
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-1.5">
-                <span class="text-sm font-semibold text-zinc-800">{{ m.name }}</span>
-                <span v-if="m.isMe"
-                  class="text-[10px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5">
-                  toi
-                </span>
-              </div>
-              <p class="text-xs text-zinc-400 mt-0.5">
-                {{ m.balance > 0 ? 'À recevoir' : m.balance < 0 ? 'À rembourser' : 'Soldé ✓' }} </p>
+              <span class="text-sm font-semibold text-zinc-800">{{ m.name }}</span>
+              <p v-if="showBalances" class="text-xs text-zinc-400 mt-0.5">
+                {{ balanceOf(m) > 0 ? 'À recevoir' : balanceOf(m) < 0 ? 'À rembourser' : 'Soldé ✓' }} </p>
             </div>
 
             <!-- Balance badge -->
-            <UBadge class="font-mono font-bold border rounded-lg" :class="balanceColor(m.balance)">
-              {{ balanceSign(m.balance) }}{{ formatAmount(Math.abs(m.balance), group.currency) }}
+            <UBadge v-if="showBalances" class="font-mono font-bold border rounded-lg"
+              :class="balanceColor(balanceOf(m))">
+              {{ balanceSign(balanceOf(m)) }}{{ formatAmount(Math.abs(balanceOf(m)), group.currency) }}
             </UBadge>
           </div>
         </div>
       </div>
 
       <!-- Dettes simplifiées -->
-      <div v-if="group.simplifiedDebts.length > 0" class="mt-5 animate-slide-up delay-200">
+      <div v-if="showBalances && group.simplifiedDebts.length > 0" class="mt-5 animate-slide-up delay-200">
         <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
           Pour solder le groupe
         </p>
