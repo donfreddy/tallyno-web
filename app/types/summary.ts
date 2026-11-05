@@ -64,3 +64,35 @@ export interface PublicGroupSummary {
   whatsappLink: string
   charCount: number
 }
+
+// ── What this app's server hands to the pages (server/utils/recap.ts) ─────
+// The raw API answer is never sent to the browser: it carries every
+// participant's status even on SOCIAL links. These are the filtered shapes.
+
+export interface RecapProgress {
+  confirmed: number
+  pending: number
+  total: number
+}
+
+/** A participant as the page may see it: fields are dropped by level. */
+export interface RecapParticipant {
+  id: string
+  name: string
+  settled?: boolean
+  amount?: number
+  isMe?: boolean
+}
+
+export interface ExpenseRecap extends Omit<PublicExpenseSummary, 'participants'> {
+  /** SOCIAL: empty. PRIVATE: names only. DETAILED: everything. */
+  participants: RecapParticipant[]
+  /** Computed before filtering, so counts survive on SOCIAL links. */
+  progress: RecapProgress
+  /** Sum still owed; null when the level hides amounts. */
+  pendingAmount: number | null
+  /** The ?viewerName= did not match: the list is returned for the picker. */
+  viewerNotFound: boolean
+}
+
+export type GroupRecap = PublicGroupSummary

@@ -1,32 +1,14 @@
-import type {
-  PublicExpenseSummary,
-  PublicGroupSummary,
-} from '~/types/summary'
+import type { ExpenseRecap, GroupRecap } from '~/types/summary'
 
 /**
- * Fetches the public (token-only) summaries through the Nitro proxy.
- * The token is the authorization; no session is required.
- *
- * Error status codes are preserved:
- *  - 410 Gone  → token expired or revoked
- *  - 404       → unknown token / wrong scope
- *  - 400       → viewerName unknown for a PRIVATE token
+ * Fetches recaps through this app's server (server/api), which filters them
+ * by token level. Error statuses: 410 expired, 404 unknown, 502 API down.
  */
 export function useSummary() {
-  const getExpenseSummary = (
-    token: string,
-    viewerName?: string | null,
-  ) => {
-    const query = viewerName ? { viewerName } : undefined
-    return $fetch<PublicExpenseSummary>(`/api/summary/${token}`, {
-      query,
-      server: true,
-    })
-  }
+  const getExpenseSummary = (token: string, viewerName?: string | null) =>
+    $fetch<ExpenseRecap>(`/api/summary/${token}`, { query: viewerName ? { viewerName } : undefined })
 
-  const getGroupSummary = (token: string) => {
-    return $fetch<PublicGroupSummary>(`/api/groups/${token}`, { server: true })
-  }
+  const getGroupSummary = (token: string) => $fetch<GroupRecap>(`/api/groups/${token}`)
 
   return { getExpenseSummary, getGroupSummary }
 }

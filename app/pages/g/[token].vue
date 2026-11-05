@@ -2,142 +2,90 @@
 const route = useRoute()
 const token = route.params.token as string
 const { getGroupSummary } = useSummary()
+const { public: { siteUrl } } = useRuntimeConfig()
 
-const { data: group, pending, error } = await useAsyncData(
-  `group-${token}`,
-  () => getGroupSummary(token),
-)
+const { data: group, pending, error } = await useAsyncData(`group-${token}`, () => getGroupSummary(token))
+
+// SOCIAL hides balances: the API omits them, the page says so instead of showing zeros.
+const showBalances = computed(() => (group.value?.level ?? 'SOCIAL') !== 'SOCIAL')
+const shareUrl = computed(() => group.value?.shareUrl ?? new URL(`/g/${token}`, siteUrl).href)
+
+function balanceLabel(balance: number) {
+  if (balance > 0) return 'À recevoir'
+  if (balance < 0) return 'Doit encore payer'
+  return 'À jour'
+}
 
 useSeoMeta({
-  title: () => group.value ? `Bilan · ${group.value.groupName}` : 'Tallyno',
-  ogTitle: () => group.value ? `📊 ${group.value.groupName} — Bilan des dépenses` : 'Tallyno',
-  ogDescription: () => group.value
-    ? `${formatAmount(group.value.totalExpenses, group.value.currency)} dépensés · ${group.value.memberCount} membres`
-    : '',
-  ogImage: 'https://tallyno.app/og-default.png',
+  title: () => (group.value ? `Bilan, ${group.value.groupName}` : 'Bilan'),
+  ogTitle: () => (group.value ? `Bilan du groupe ${group.value.groupName}` : 'Récap Tallyno'),
+  ogDescription: () =>
+    group.value ? `${formatAmount(group.value.totalExpenses, group.value.currency)} de dépenses, ${group.value.memberCount} ${group.value.memberCount > 1 ? 'membres' : 'membre'}` : '',
 })
-
-// Privacy : les balances individuelles ne sont visibles qu'en DETAILED/PRIVATE
-const showBalances = computed(() => (group.value?.level ?? 'SOCIAL') !== 'SOCIAL')
-
-const shareUrl = computed(() => group.value?.shareUrl ?? `https://tallyno.app/g/${token}`)
-const shareText = computed(() => group.value?.shareText ?? '')
-
-function balanceOf(member: { balance?: number }): number {
-  return member.balance ?? 0
-}
-
-function balanceColor(balance: number) {
-  if (balance > 0) return 'text-emerald-600 bg-emerald-50 border-emerald-200'
-  if (balance < 0) return 'text-rose-500 bg-rose-50 border-rose-200'
-  return 'text-zinc-500 bg-zinc-50 border-zinc-200'
-}
-
-function balanceSign(balance: number) {
-  if (balance > 0) return '+'
-  return ''
-}
 </script>
 
 <template>
-  <div class="max-w-lg mx-auto px-4 pb-8 pt-5">
+  <SummarySkeleton v-if="pending" />
+  <SummaryState v-else-if="error || !group" :status="error?.statusCode" />
 
-    <SummarySkeleton v-if="pending" />
-    <TokenExpired v-else-if="error?.statusCode === 410" />
-    <SummaryError v-else-if="error" />
+  <div v-else class="space-y-5">
+    <header >
+      <p class="text-sm font-semibold text-petrol-700">Bilan du groupe</p>
+      <h1 class="mt-1 text-3xl font-bold tracking-tight">{{ group.groupName }}</h1>
+      <p class="mt-1 text-zinc-600">
+        {{ group.memberCount }} {{ group.memberCount > 1 ? 'membres' : 'membre' }},
+        <span class="amount font-semibold text-zinc-900">{{ formatAmount(group.totalExpenses, group.currency) }}</span>
+        de dépenses.
+      </p>
+    </header>
 
-    <template v-else-if="group">
-
-      <!-- Header groupe -->
-      <div class="animate-slide-up">
-        <div class="flex items-center gap-2 mb-3">
-          <span class="text-xs font-medium text-zinc-500 bg-zinc-100 rounded-full px-2.5 py-1">
-            📊 Bilan du groupe
+    <section v-if="showBalances && group.simplifiedDebts.length" class="rounded-2xl bg-petrol-900 text-white p-5">
+      <h2 class="text-sm text-petrol-200">Pour que tout le monde soit à jour</h2>
+      <ul class="mt-3 space-y-2.5">
+        <li v-for="(d, i) in group.simplifiedDebts" :key="i" class="flex items-baseline justify-between gap-3">
+          <span class="min-w-0">
+            <strong>{{ d.fromName }}</strong> <span class="text-petrol-200">paie</span> <strong>{{ d.toName }}</strong>
           </span>
-        </div>
-        <h1 class="text-2xl font-bold text-zinc-900 tracking-tight">
-          {{ group.groupName }}
-        </h1>
-        <p class="text-sm text-zinc-500 mt-1">
-          {{ group.memberCount }} membres •
-          <span class="font-mono font-semibold text-indigo-600">
-            {{ formatAmount(group.totalExpenses, group.currency) }}
+          <span class="amount font-semibold">{{ formatAmount(d.amount, group.currency) }}</span>
+        </li>
+      </ul>
+      <p class="mt-4 text-sm text-petrol-200">Le minimum de transferts pour solder le groupe.</p>
+    </section>
+
+    <section v-else-if="showBalances" class="rounded-2xl bg-emerald-50 ring-1 ring-emerald-200 p-5 text-emerald-900">
+      <p class="font-semibold">Tout le monde est à jour.</p>
+    </section>
+
+    <ul class="rounded-2xl bg-white ring-1 ring-zinc-200 divide-y divide-zinc-100">
+      <li v-for="m in group.members" :key="m.id" class="flex items-center gap-3 px-4 py-3">
+        <span class="size-9 shrink-0 grid place-items-center rounded-full bg-petrol-100 text-petrol-800 text-sm font-bold">
+          {{ getInitials(m.name) }}
+        </span>
+        <span class="flex-1 min-w-0">
+          <span class="block font-semibold truncate">{{ m.name }}</span>
+          <span v-if="showBalances && typeof m.balance === 'number'" class="block text-sm text-zinc-500">
+            {{ balanceLabel(m.balance) }}
           </span>
-          dépensés au total
-        </p>
-      </div>
+        </span>
+        <span
+          v-if="showBalances && typeof m.balance === 'number' && m.balance !== 0"
+          class="amount font-semibold"
+          :class="m.balance > 0 ? 'text-emerald-700' : 'text-zinc-900'"
+        >
+          {{ m.balance > 0 ? '+' : '' }}{{ formatAmount(m.balance, group.currency) }}
+        </span>
+      </li>
+    </ul>
 
-      <!-- Positions nettes -->
-      <div class="mt-5 animate-slide-up delay-100">
-        <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-          Positions nettes
-        </p>
-        <div class="bg-white rounded-2xl border border-zinc-100 shadow-sm divide-y divide-zinc-50 overflow-hidden">
-          <div v-for="m in group.members" :key="m.id" class="flex items-center gap-3 px-4 py-3.5">
-            <!-- Avatar -->
-            <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-xs font-bold"
-              :class="getAvatarColor(m.name)">
-              {{ getInitials(m.name) }}
-            </div>
+    <p v-if="!showBalances" class="text-sm text-zinc-600">
+      Ce lien montre les membres du groupe, pas les soldes. Les soldes de chacun sont dans l'app Tallyno.
+    </p>
 
-            <!-- Nom -->
-            <div class="flex-1 min-w-0">
-              <span class="text-sm font-semibold text-zinc-800">{{ m.name }}</span>
-              <p v-if="showBalances" class="text-xs text-zinc-400 mt-0.5">
-                {{ balanceOf(m) > 0 ? 'À recevoir' : balanceOf(m) < 0 ? 'À rembourser' : 'Soldé ✓' }} </p>
-            </div>
+    <section v-if="group.shareText">
+      <h2 class="mb-2 font-bold">Partager ce bilan</h2>
+      <ShareSummary :share-url="shareUrl" :share-text="group.shareText" label="Envoyer dans le groupe" />
+    </section>
 
-            <!-- Balance badge -->
-            <UBadge v-if="showBalances" class="font-mono font-bold border rounded-lg"
-              :class="balanceColor(balanceOf(m))">
-              {{ balanceSign(balanceOf(m)) }}{{ formatAmount(Math.abs(balanceOf(m)), group.currency) }}
-            </UBadge>
-          </div>
-        </div>
-      </div>
-
-      <!-- Dettes simplifiées -->
-      <div v-if="showBalances && group.simplifiedDebts.length > 0" class="mt-5 animate-slide-up delay-200">
-        <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-          Pour solder le groupe
-        </p>
-        <div class="space-y-2">
-          <div v-for="(d, i) in group.simplifiedDebts" :key="i"
-            class="flex items-center gap-3 bg-white rounded-xl border border-zinc-100 shadow-sm px-4 py-3.5">
-            <div class="flex-1 flex items-center gap-2 min-w-0">
-              <span class="text-sm font-semibold text-zinc-700 truncate">{{ d.fromName }}</span>
-              <svg class="w-4 h-4 text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-              <span class="text-sm font-semibold text-zinc-700 truncate">{{ d.toName }}</span>
-            </div>
-            <span class="font-mono font-bold text-sm text-brand-500 shrink-0">
-              {{ formatAmount(d.amount, group.currency) }}
-            </span>
-          </div>
-        </div>
-        <p class="text-[11px] text-zinc-400 text-center mt-2">
-          Minimum de virements pour solder tout le groupe
-        </p>
-      </div>
-
-      <!-- Séparateur -->
-      <div class="my-5 h-px bg-zinc-100" />
-
-      <!-- Partage -->
-      <div class="animate-slide-up delay-300">
-        <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-          Partager le bilan
-        </p>
-        <ShareSummary :share-url="shareUrl" :share-text="shareText" label="Envoyer le bilan sur WhatsApp" />
-      </div>
-
-      <!-- Séparateur -->
-      <div class="my-5 h-px bg-zinc-100" />
-
-      <DownloadAppBanner />
-      <SummaryFooter class="mt-4" />
-
-    </template>
+    <InstallCta text="Avec l'app, tu ajoutes les dépenses et tu suis tous tes groupes." />
   </div>
 </template>

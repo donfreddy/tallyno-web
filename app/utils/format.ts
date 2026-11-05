@@ -1,5 +1,5 @@
 export function formatAmount(amount: number, currency = 'XAF'): string {
-  return new Intl.NumberFormat('fr-FR', { currency, style: 'currency' }).format(amount)
+  return new Intl.NumberFormat('fr-FR', { currency, style: 'currency', maximumFractionDigits: 0 }).format(amount)
 }
 
 export function formatDate(isoString: string): string {
@@ -7,18 +7,11 @@ export function formatDate(isoString: string): string {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
+    // Due dates are Cameroon dates: a UTC server would print the day before.
+    timeZone: 'Africa/Douala',
   }).format(new Date(isoString))
 }
 
 export function getInitials(name: string): string {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-}
-
-export function getAvatarColor(name: string): string {
-  const colors = [
-    'bg-violet-500', 'bg-blue-500', 'bg-emerald-500',
-    'bg-amber-500', 'bg-rose-500', 'bg-cyan-500',
-  ]
-  const idx = name.charCodeAt(0) % colors.length
-  return colors[idx]!
+  return name.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }

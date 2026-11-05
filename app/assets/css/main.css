@@ -1,49 +1,43 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@import "@fontsource-variable/dm-sans";
 
-:root {
-  --font-sans: 'DM Sans', 'Inter', 'Roboto', sans-serif;
-  --font-mono: 'DM Mono', monospace;
+/* Same petrol scale as tallyno-mobile (AppColors.petrol*) and the marketing site. */
+@theme static {
+  --color-petrol-50: #ecfafb;
+  --color-petrol-100: #d7f3f6;
+  --color-petrol-200: #b2e6ec;
+  --color-petrol-300: #7dd3dc;
+  --color-petrol-400: #31b1be;
+  --color-petrol-500: #037a84;
+  --color-petrol-600: #016770;
+  --color-petrol-700: #00555c;
+  --color-petrol-800: #034349;
+  --color-petrol-900: #003237;
+  --color-petrol-950: #001d20;
+
+  --font-sans: "DM Sans Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
- 
-* {
+
+html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
- 
-body {
-  font-family: var(--font-sans);
-  background: #F8FAFC;
+  -webkit-text-size-adjust: 100%;
 }
 
-/* Animations */
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+body {
+  font-family: var(--font-sans);
+  background: #f3f7f7;
+  color: #18181b;
 }
- 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+
+/* Amounts never wrap and keep their digits aligned. */
+.amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
- 
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.6; }
+
+:focus-visible {
+  outline: 2.5px solid var(--color-petrol-500);
+  outline-offset: 2px;
 }
- 
-.animate-slide-up {
-  animation: slideUp 0.4s ease both;
-}
-.animate-fade-in {
-  animation: fadeIn 0.3s ease both;
-}
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
- 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
- 

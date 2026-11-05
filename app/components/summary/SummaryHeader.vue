@@ -1,78 +1,35 @@
 <script setup lang="ts">
-import type { PublicExpenseSummary } from '~/types/summary'
+import type { ExpenseRecap } from '~/types/summary'
 
-const props = defineProps<{ expense: PublicExpenseSummary }>()
+const props = defineProps<{ expense: ExpenseRecap }>()
 
-const date = computed(() => formatDate(props.expense.date))
+const round = computed(() => props.expense.round)
 const total = computed(() => formatAmount(props.expense.totalAmount, props.expense.currency))
-const confirmedCount = computed(() => props.expense.participants.filter(p => p.settled).length)
-const pendingCount = computed(() => props.expense.participants.filter(p => !p.settled).length)
-const pendingAmount = computed(() =>
-  props.expense.participants.filter(p => !p.settled).reduce((s, p) => s + p.amount, 0)
-)
 </script>
 
 <template>
-  <div class="animate-slide-up">
-    <!-- Pill catégorie -->
-    <div class="flex items-center gap-2 mb-3">
-      <span class="text-2xl leading-none">{{ expense.categoryEmoji }}</span>
-      <span class="text-xs font-medium text-zinc-500 bg-zinc-100 rounded-full px-2.5 py-1">
-        {{ expense.groupName }}
-      </span>
-      <div v-if="expense.status === 'LOCKED'" class="inline-flex items-center">
-        <UBadge color="warning" variant="outline" class="rounded-full bg-amber-50 border-amber-200" size="sm">
-          <span class="text-amber-700">Verrouillée</span>
-        </UBadge>
-      </div>
-    </div>
+  <header >
+    <p class="text-sm font-semibold text-petrol-700">{{ expense.groupName }}</p>
 
-    <!-- Description + montant -->
-    <h1 class="text-2xl font-bold text-zinc-900 tracking-tight leading-snug">
-      {{ expense.description }}
-    </h1>
+    <template v-if="round">
+      <h1 class="mt-1 text-3xl font-bold tracking-tight">Tour {{ round.roundNumber }}</h1>
+      <p class="mt-1 text-zinc-600">
+        Reçu par <strong class="text-zinc-900">{{ expense.payerName }}</strong>,
+        à payer avant le {{ formatDate(round.dueDate) }}.
+      </p>
+    </template>
 
-    <div class="mt-1 flex items-baseline gap-2">
-      <span class="text-3xl font-bold text-brand-500 font-mono tracking-tight">
-        {{ total }}
-      </span>
-    </div>
+    <template v-else>
+      <h1 class="mt-1 text-3xl font-bold tracking-tight">{{ expense.description }}</h1>
+      <p class="mt-1 text-zinc-600">
+        <span class="amount font-semibold text-zinc-900">{{ total }}</span>,
+        avancés par <strong class="text-zinc-900">{{ expense.payerName }}</strong>
+        le {{ formatDate(expense.date) }}.
+      </p>
+    </template>
 
-    <!-- Payeur + date -->
-    <p class="mt-2 text-sm text-zinc-500">
-      Payé par <span class="font-semibold text-zinc-700">{{ expense.payerName }}</span>
-      • {{ date }}
+    <p v-if="expense.amendmentCount > 0" class="mt-2 text-sm text-zinc-600">
+      Corrigée {{ expense.amendmentCount }} fois. L'historique des corrections est dans l'app.
     </p>
-
-    <!-- Statut pills -->
-    <div class="mt-4 flex flex-wrap gap-2">
-      <div v-if="confirmedCount > 0">
-        <UBadge color="success" variant="outline"
-          class="rounded-full border-emerald-200 flex items-center gap-1.5 bg-emerald-50 px-2" size="sm">
-          <span class="text-emerald-500 text-sm">✅</span>
-          <span class="text-xs font-medium text-emerald-700">
-            {{ confirmedCount }} confirmé{{ confirmedCount > 1 ? 's' : '' }}
-          </span>
-        </UBadge>
-      </div>
-      <div v-if="pendingCount > 0">
-        <UBadge color="warning" variant="outline"
-          class="rounded-full border-amber-200 flex items-center gap-1.5 bg-amber-50 px-2" size="sm">
-          <span class="text-amber-500 text-sm">⏳</span>
-          <span class="text-xs font-medium text-amber-700">
-            {{ formatAmount(pendingAmount, expense.currency) }} en attente
-          </span>
-        </UBadge>
-      </div>
-      <div v-if="expense.amendmentCount > 0">
-        <UBadge color="info" variant="outline"
-          class="rounded-full border-blue-200 flex items-center gap-1.5 bg-blue-50 px-2" size="sm">
-          <span class="text-blue-500 text-sm">✏️</span>
-          <span class="text-xs font-medium text-blue-700">
-            {{ expense.amendmentCount }} correction{{ expense.amendmentCount > 1 ? 's' : '' }}
-          </span>
-        </UBadge>
-      </div>
-    </div>
-  </div>
+  </header>
 </template>

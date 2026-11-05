@@ -1,193 +1,144 @@
 <script setup lang="ts">
+import { findMe, isRound, myPartState } from '~/utils/summary-view'
+
 const route = useRoute()
 const token = route.params.token as string
 const { getExpenseSummary } = useSummary()
 
-// L'identité du viewer arrive par ?viewerName= (aiguillée depuis le lien
-// personnel partagé). Pour les tokens PRIVATE, sans nom on montre un picker.
+// The viewer picks their name; it travels as ?viewerName=. The server answers
+// an unknown name with the list again and viewerNotFound, never with an error.
 const viewerName = computed(() => {
   const v = route.query.viewerName
   return typeof v === 'string' && v ? v : null
 })
 
-const { data, pending, error } = await useAsyncData(
-  `expense-me-${token}-${viewerName.value ?? ''}`,
+const { data: expense, status, error } = await useAsyncData(
+  `expense-me-${token}`,
   () => getExpenseSummary(token, viewerName.value),
   { watch: [viewerName] },
 )
 
-const expense = computed(() => data.value ?? null)
-const myPart = computed(() =>
-  expense.value?.myPart
-  ?? expense.value?.participants.find(p => p.isMe)
-  ?? null,
+const round = computed(() => (expense.value ? isRound(expense.value) : false))
+const me = computed(() => (expense.value ? findMe(expense.value) : null))
+const state = computed(() =>
+  expense.value
+    ? myPartState({
+        level: expense.value.level,
+        viewerName: viewerName.value,
+        viewerNotFound: expense.value.viewerNotFound,
+        me: me.value,
+        payerName: expense.value.payerName,
+      })
+    : null,
 )
 
-// Picker : token PRIVATE sans nom → il faut s'identifier.
-const needsName = computed(() => !!expense.value?.requiresViewerName)
-// 400 = nom inconnu pour un token PRIVATE → re-picker avec message.
-const nameNotFound = computed(() => error.value?.statusCode === 400)
-const showPicker = computed(() => !pending.value && (needsName.value || nameNotFound.value))
-// SOCIAL : aucun montant individuel → vue personnelle inutile.
-const noIndividualAmounts = computed(() =>
-  !showPicker.value && expense.value?.level === 'SOCIAL' && !myPart.value,
-)
-
-async function selectName(name: string) {
+// Move focus to the answer after a name is picked, so keyboard and screen
+// reader users are not left on a button that no longer exists.
+const answer = ref<HTMLElement | null>(null)
+async function pick(name: string) {
   await navigateTo({ query: { viewerName: name } })
+  await nextTick()
+  answer.value?.focus()
 }
 
 useSeoMeta({
-  title: () => myPart.value ? `Ta part · ${expense.value?.description}` : 'Tallyno',
-  description: () => myPart.value
-    ? `Tu dois ${formatAmount(myPart.value.amount ?? 0, expense.value?.currency ?? 'XAF')} à ${expense.value?.payerName}`
-    : '',
-  ogTitle: () => myPart.value
-    ? `💰 Tu dois ${formatAmount(myPart.value.amount ?? 0, expense.value?.currency ?? 'XAF')} à ${expense.value?.payerName}`
-    : 'Tallyno',
+  title: () => (round.value ? 'Ma cotisation' : 'Ma part'),
+  ogTitle: () => (expense.value ? `Ta part : ${round.value ? `tour ${expense.value.round!.roundNumber}` : expense.value.description}` : 'Récap Tallyno'),
+  ogDescription: () => (expense.value ? `${expense.value.groupName}, sur Tallyno` : ''),
 })
 </script>
 
 <template>
-  <div class="max-w-lg mx-auto px-4 pb-8 pt-5">
+  <SummarySkeleton v-if="status === 'pending' && !expense" />
+  <SummaryState v-else-if="error || !expense" :status="error?.statusCode" />
 
-    <SummarySkeleton v-if="pending" />
-    <TokenExpired v-else-if="error?.statusCode === 410" />
-    <SummaryError v-else-if="error && error.statusCode !== 400" />
+  <div v-else class="space-y-5">
+    <SummaryHeader :expense="expense" />
 
-    <!-- Picker d'identité pour les tokens PRIVATE -->
-    <div v-else-if="showPicker && expense" class="animate-slide-up">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="text-2xl">{{ expense.categoryEmoji }}</span>
-        <h1 class="text-lg font-bold text-zinc-900 tracking-tight">{{ expense.description }}</h1>
-      </div>
-
-      <p v-if="nameNotFound" class="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2.5 mb-4">
-        Ce nom n'existe pas dans cette dépense. Choisis le tien ci-dessous.
+    <!-- Who are you? -->
+    <section v-if="state === 'pick-name' || state === 'unknown-name'">
+      <p v-if="state === 'unknown-name'" role="alert" class="mb-3 rounded-xl bg-amber-50 ring-1 ring-amber-200 px-3 py-2.5 text-sm text-amber-900">
+        Ce nom ne fait pas partie de ce récap. Choisis le tien dans la liste.
       </p>
-
-      <div class="bg-white rounded-2xl border border-zinc-100 shadow-sm p-5">
-        <p class="text-sm font-semibold text-zinc-800 mb-1">Qui es-tu ?</p>
-        <p class="text-xs text-zinc-500 mb-4">
-          Choisis ton nom pour voir <span class="font-semibold text-zinc-700">ta part</span> de cette dépense.
-        </p>
-        <div class="space-y-2">
+      <h2 class="font-bold">Qui es-tu ?</h2>
+      <p class="text-sm text-zinc-600">Choisis ton nom pour voir ta part.</p>
+      <ul class="mt-3 grid gap-2">
+        <li v-for="p in expense.participants" :key="p.id">
           <button
-            v-for="p in expense.participants"
-            :key="p.id"
-            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors text-left"
-            @click="selectName(p.name)">
-            <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-xs font-bold"
-              :class="getAvatarColor(p.name)">
+            type="button"
+            class="w-full flex items-center gap-3 rounded-xl bg-white ring-1 ring-zinc-200 px-4 py-3 text-left font-semibold hover:ring-petrol-300"
+            @click="pick(p.name)"
+          >
+            <span class="size-9 shrink-0 grid place-items-center rounded-full bg-petrol-100 text-petrol-800 text-sm" aria-hidden="true">
               {{ getInitials(p.name) }}
-            </div>
-            <span class="text-sm font-semibold text-zinc-800 flex-1">{{ p.name }}</span>
-            <svg class="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
+            </span>
+            {{ p.name }}
           </button>
-        </div>
-      </div>
+        </li>
+      </ul>
+    </section>
 
-      <SummaryFooter class="mt-4" />
-    </div>
-
-    <template v-else-if="expense && myPart">
-
-      <!-- Vue personnelle — ta part uniquement -->
-      <div class="animate-slide-up">
-        <div
-          class="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 rounded-full px-3 py-1.5 mb-4">
-          <span class="text-indigo-600 text-xs">👤</span>
-          <span class="text-xs font-medium text-indigo-600">Ton résumé personnel</span>
-        </div>
-
-        <div class="text-2xl mb-1">{{ expense.categoryEmoji }}</div>
-        <h1 class="text-2xl font-bold text-zinc-900 tracking-tight">{{ expense.description }}</h1>
-        <p class="text-sm text-zinc-500 mt-1">
-          Groupe : <span class="font-medium text-zinc-700">{{ expense.groupName }}</span>
+    <!-- What I owe -->
+    <template v-else-if="(state === 'owes' || state === 'settled' || state === 'is-payer') && me">
+      <section
+        ref="answer"
+        tabindex="-1"
+        class="rounded-2xl p-5 outline-none"
+        :class="state === 'owes' ? 'bg-petrol-900 text-white' : 'bg-emerald-50 ring-1 ring-emerald-200 text-emerald-900'"
+      >
+        <h2 class="text-sm" :class="state === 'owes' ? 'text-petrol-200' : 'text-emerald-800'">
+          {{ me.name }}, {{ round ? 'ta cotisation pour ce tour' : 'ta part' }}
+        </h2>
+        <p class="mt-1 amount text-4xl font-bold tracking-tight">{{ formatAmount(me.amount ?? 0, expense.currency) }}</p>
+        <p class="mt-2" :class="state === 'owes' ? 'text-petrol-100' : ''">
+          <template v-if="state === 'is-payer'">Rien à payer : c'est toi qui as avancé cette dépense.</template>
+          <template v-else-if="state === 'settled'">C'est réglé : ton paiement est confirmé.</template>
+          <template v-else>Tu dois encore payer {{ expense.payerName }}.</template>
         </p>
-      </div>
+      </section>
 
-      <!-- Ma part — card centrale -->
-      <div class="mt-5 rounded-2xl p-5 animate-slide-up delay-100" :class="myPart.settled
-        ? 'bg-emerald-50 border border-emerald-200'
-        : 'bg-amber-50 border border-amber-200'">
-        <p class="text-xs font-semibold uppercase tracking-wider mb-1"
-          :class="myPart.settled ? 'text-emerald-600' : 'text-amber-600'">
-          Ta part
+      <template v-if="state === 'owes'">
+        <PayInstructions
+          v-if="expense.payeePhone"
+          :payee-name="expense.payerName"
+          :payee-phone="expense.payeePhone"
+          :amount="me.amount"
+          :currency="expense.currency"
+        />
+        <p class="text-sm text-zinc-600">
+          <template v-if="round">
+            Une fois payé, préviens {{ expense.payerName }} ou l'organisateur de la tontine : ton paiement est confirmé
+            dans Tallyno.
+          </template>
+          <template v-else>
+            Une fois payé, préviens {{ expense.payerName }} : c'est {{ expense.payerName }} qui confirme dans Tallyno.
+          </template>
+          Avec l'app, tu déclares ton paiement toi-même.
         </p>
+      </template>
 
-        <div class="flex items-end justify-between">
-          <div>
-            <p class="text-3xl font-bold font-mono tracking-tight"
-              :class="myPart.settled ? 'text-emerald-700' : 'text-amber-700'">
-              {{ formatAmount(myPart.amount ?? 0, expense.currency) }}
-            </p>
-            <p class="text-sm mt-1" :class="myPart.settled ? 'text-emerald-600' : 'text-amber-700'">
-              → <span class="font-semibold">{{ expense.payerName }}</span>
-            </p>
-          </div>
-
-          <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-            :class="myPart.settled ? 'bg-emerald-100' : 'bg-amber-100'">
-            {{ myPart.settled ? '✅' : '⏳' }}
-          </div>
-        </div>
-
-        <p v-if="myPart.settled" class="text-xs text-emerald-600 font-medium mt-3 flex items-center gap-1">
-          <span>✓</span> Paiement confirmé par {{ expense.payerName }}
-        </p>
-        <p v-else class="text-xs text-amber-600 mt-3">
-          {{ expense.payerName }} attend ta confirmation de paiement.
-        </p>
-      </div>
-
-      <!-- Actions si pas settlé -->
-      <div v-if="!myPart.settled" class="mt-5 space-y-4">
-        <PayDeepLink v-if="expense.payeePhone" :payee-name="expense.payerName" :payee-phone="expense.payeePhone"
-          :amount="myPart.amount ?? 0" :currency="expense.currency" />
-
-        <template v-if="expense.payeePhone">
-          <div class="h-px bg-zinc-100" />
-        </template>
-
-        <!-- CTA app pour marquer payé -->
-        <div class="animate-slide-up delay-300 bg-zinc-50 rounded-2xl border border-zinc-200 p-4">
-          <p class="text-sm font-semibold text-zinc-800 mb-1">Une fois payé...</p>
-          <p class="text-xs text-zinc-500 mb-3">
-            Ouvre Tallyno pour confirmer ton paiement à {{ expense.payerName }}.
-            Il recevra une notification instantanée.
-          </p>
-          <DownloadAppBanner :compact="true" />
-        </div>
-      </div>
-
-      <!-- Déjà settlé - message positif -->
-      <div v-else class="mt-5 animate-slide-up delay-200">
-        <div class="text-center py-4">
-          <p class="text-4xl mb-2">🎉</p>
-          <p class="text-sm font-semibold text-zinc-700">Tu es à jour !</p>
-          <p class="text-xs text-zinc-500 mt-1">
-            Ton paiement a été confirmé par {{ expense.payerName }}.
-          </p>
-        </div>
-        <DownloadAppBanner />
-      </div>
-
-      <SummaryFooter class="mt-4" />
+      <p class="text-sm">
+        <NuxtLink :to="{ query: {} }" class="font-semibold text-petrol-700 underline underline-offset-2">
+          Ce n'est pas moi
+        </NuxtLink>
+      </p>
     </template>
 
-    <!-- SOCIAL : aucun montant individuel sur ce lien -->
-    <div v-else-if="noIndividualAmounts" class="animate-slide-up text-center pt-10">
-      <div class="text-4xl mb-3">🔒</div>
-      <h2 class="text-lg font-bold text-zinc-800 mb-2">Montants privés sur ce lien</h2>
-      <p class="text-sm text-zinc-500 max-w-xs mx-auto mb-6">
-        Ce lien ne révèle pas les montants individuels. Ouvre Tallyno pour voir ta part.
+    <!-- SOCIAL link: no individual amount, but the payee and the progress are known -->
+    <template v-else>
+      <ProgressCard :progress="expense.progress" :pending-amount="null" :currency="expense.currency" :round="round" />
+      <PayInstructions
+        v-if="expense.payeePhone && expense.progress.pending > 0"
+        :payee-name="expense.payerName"
+        :payee-phone="expense.payeePhone"
+        :currency="expense.currency"
+      />
+      <p class="text-sm text-zinc-600">
+        Ce lien montre l'avancement du groupe, pas la part de chacun. Ton montant est dans l'app Tallyno, ou demande ton
+        lien personnel à {{ expense.payerName }}.
       </p>
-      <DownloadAppBanner />
-      <SummaryFooter class="mt-4" />
-    </div>
+    </template>
 
+    <InstallCta text="Avec l'app, tu déclares tes paiements et tu suis tous tes groupes." />
   </div>
 </template>
