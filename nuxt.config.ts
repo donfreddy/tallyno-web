@@ -45,7 +45,7 @@ export default defineNuxtConfig({
     apiBase: process.env.API_BASE_URL || 'http://localhost:3000',
     public: {
       // Public origin of this app, for absolute Open Graph URLs.
-      siteUrl: 'https://tallyno.lehmora.com',
+      siteUrl: 'https://tallyno.vercel.app',
       // Marketing site: the root of this app redirects there.
       marketingUrl: 'https://tallyno.lehmora.com',
     },
