@@ -1,52 +1,37 @@
-tallyno-web/                          # Nuxt 3 + Nuxt UI + Tailwind
-│
-├── nuxt.config.ts
-├── tailwind.config.ts
-│
-├── app/
-│   └── app.vue                       # layout racine minimaliste
-│
-├── pages/
-│   ├── s/
-│   │   └── [token].vue               # summary public (SSR) — page la plus critique
-│   ├── s/
-│   │   └── [token]/
-│   │       └── me.vue                # summary personnalisé (auth légère)
-│   └── g/
-│       └── [token].vue               # summary groupe consolidé (SSR)
-│
-├── components/
-│   ├── summary/
-│   │   ├── SummaryHeader.vue         # dépense + payeur + montant total
-│   │   ├── DebtLine.vue              # "Ta part : 8 000 XAF → Freddy"
-│   │   ├── StatusBadge.vue           # ✅ Confirmé / ⏳ En attente
-│   │   └── SummaryFooter.vue         # "Géré avec Tallyno 🧾"
-│   │
-│   ├── cta/
-│   │   ├── PayDeepLink.vue           # bouton MTN / Orange / Wave
-│   │   ├── DownloadAppBanner.vue     # CTA téléchargement Flutter
-│   │   └── ShareSummary.vue          # Web Share API → relance WhatsApp
-│   │
-│   └── states/
-│       ├── SummarySkeleton.vue       # skeleton pendant le fetch
-│       ├── TokenExpired.vue          # lien expiré — redirection app
-│       └── SummaryError.vue          # erreur générique
-│
-├── composables/
-│   ├── useSummary.ts                 # fetch + gestion token expiré
-│   └── useDeepLink.ts               # construit les deep links MTN/Orange/Wave
-│
-├── server/
-│   └── api/
-│       └── summary/
-│           └── [token].get.ts        # proxy vers NestJS — évite le CORS
-│                                     # + injecte les Open Graph tags
-│
-├── middleware/
-│   └── validate-token.ts             # vérifie TTL avant de servir la page
-│
-└── public/
-└── og-default.png               # image Open Graph fallback
+# Architecture
 
-# Nuxt UI pour des composants pré-stylés et accessibles
-https://ui.nuxt.com/docs/getting-started/installation/nuxt
+```
+tallyno-web/                     Nuxt 4 + Nuxt UI + Tailwind 4
+├── nuxt.config.ts               runtime config, security headers, SSR route rules
+├── server/
+│   ├── api/summary/[token].get.ts  proxy to GET /api/v1/public/summary/:token (?viewerName=)
+│   ├── api/groups/[token].get.ts   proxy to GET /api/v1/public/groups/:token
+│   └── utils/recap.ts              filters by level, maps errors (tests/recap.test.ts)
+└── app/
+    ├── pages/
+    │   ├── index.vue            302 to the marketing site
+    │   ├── s/[token]/index.vue  expense or tontine round recap
+    │   ├── s/[token]/me.vue     the viewer's own share, name picker on PRIVATE links
+    │   └── g/[token].vue        group balances and simplified transfers
+    ├── components/
+    │   ├── summary/             SummaryHeader, SummarySkeleton
+    │   ├── ProgressCard         counts only, safe on SOCIAL links
+    │   ├── ParticipantList      names, status, amounts (DETAILED only)
+    │   ├── PayInstructions      payee number and amount with copy buttons
+    │   ├── CopyField, ShareSummary, InstallCta, BrandMark
+    │   └── SummaryState         410 / 404 / 5xx messages, sets the HTTP status
+    ├── composables/useSummary.ts
+    ├── utils/summary-view.ts    pure visibility rules (tests/summary-view.test.ts)
+    └── types/summary.ts         mirrors tallyno-api public-summary.service.ts
+```
+
+## Decisions
+
+- No Mobile Money deep links: MTN MoMo and Orange Money publish none, so the page hands over the number and the amount
+  to copy instead of opening a fake scheme.
+- SOCIAL links never list who has not paid, matching `summary-text.builder.ts` and TALLYNO_TONE.md.
+- The root redirects to the marketing site, so the app works on its own subdomain or behind a path-based router. With a
+  path router, send `/s/`, `/g/`, `/api/`, `/_nuxt/`, `/og-default.png` and the favicons to this app, everything else
+  to the marketing site.
+- Nuxt UI stays, though only `<UApp>` is used today: the planned "manage from the web" screens need its forms, modals
+  and toasts.

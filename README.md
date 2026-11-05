@@ -1,81 +1,57 @@
-# Tallyno Web 💸
+# Tallyno Web
 
-Tallyno is a web platform designed to simplify shared expenses and group debt management (specifically tailored for Cameroon and Africa). No more Excel sheets and disputes: Tallyno calculates who owes what, generates clear summaries to share on WhatsApp, and integrates direct Mobile Money payments (MTN, Orange).
+Public recap pages for people who do not have the Tallyno app. When a group shares a recap on WhatsApp, the link opens
+here: the expense or tontine round, who has paid, and how to pay the right person by Mobile Money.
 
-## 🌟 Features
+Tallyno never holds money. These pages only read what the group recorded in the app.
 
-- **Automatic Calculation:** Automatically determines the exact share of each member in a group.
-- **WhatsApp-First:** Generates clear, easy-to-read summaries that can be copied/pasted directly into WhatsApp groups.
-- **Dedicated Views:**
-  - **Group Balance (`/g/[token]`)**: Global view of net positions and simplified debts to settle the group.
-  - **Detailed Expense (`/s/[token]`)**: Detailed breakdown of a specific expense for all participants.
-  - **Personal View (`/s/[token]/me`)**: User-centric summary showing exactly how much they owe and to whom.
-- **Mobile Money Deep Links:** Direct links to settle debts via MTN Mobile Money or Orange Money.
-- **Modern Design:** Smooth, responsive, and animated user interface (Vue 3 + Tailwind CSS 4).
+## Routes
 
-## 🛠️ Tech Stack
+| Route | What it shows |
+| --- | --- |
+| `/s/:token` | One expense or one tontine round: progress, and names with amounts on DETAILED links |
+| `/s/:token/me` | The viewer's own share and the payee's Mobile Money number (PRIVATE links ask "who are you") |
+| `/g/:token` | A group's balances and the minimum transfers to settle it |
+| `/` | Redirects to the marketing site |
 
-- **Framework:** [Nuxt 4](https://nuxt.com/) / [Vue 3](https://vuejs.org/)
-- **UI & Styling:** [Tailwind CSS v4](https://tailwindcss.com/) & [@nuxt/ui](https://ui.nuxt.com/)
-- **Fonts:** DM Sans & DM Mono
+Links expire after 7 days (HTTP 410). Visibility follows the token level set in the app:
 
-## 📂 Project Structure
+- `SOCIAL`: counts only, never who has not paid (same rule as the WhatsApp text);
+- `DETAILED`: every name, status and amount;
+- `PRIVATE`: names for the picker, then only the chosen person's amount.
 
-Main pages are located in the `app/pages/` directory:
+tallyno-api returns every participant's status at every level, so the filtering happens in this app's server
+(`server/utils/recap.ts`) before anything reaches the browser, SSR payload included. The page rules live in
+`app/utils/summary-view.ts`. Both are unit tested.
 
-- `index.vue`: Landing page explaining the concept and encouraging mobile app downloads.
-- `g/[token].vue`: Group balance page displaying everyone's balance and simplified debts.
-- `s/[token]/index.vue`: Detailed page for a specific expense.
-- `s/[token]/me.vue`: Personal view indicating "Your share" to pay for an expense.
+The name on PRIVATE and DETAILED links is self-declared: anyone holding the link can pick any name. The link itself is
+the access control.
 
-## 🚀 Installation & Setup
+## Stack
 
-This project uses a `Makefile` to simplify common commands, but you can also use `npm` directly.
+- Nuxt 4 (SSR, so WhatsApp reads the Open Graph tags from the first HTML) and Nuxt UI
+- Tailwind CSS 4 with the petrol palette shared with the mobile app and the marketing site
+- DM Sans, self-hosted through Fontsource
+- A Nitro proxy (`server/api`) to the NestJS public endpoints, so the browser never calls the API directly
 
-### Prerequisites
+## Configuration
 
-- [Node.js](https://nodejs.org/) (recommended version)
-- npm
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `NUXT_API_BASE` | `http://localhost:3000` | tallyno-api base URL (server side only) |
+| `NUXT_PUBLIC_SITE_URL` | `https://tallyno.example` | Public origin of this app, for Open Graph URLs |
+| `NUXT_PUBLIC_MARKETING_URL` | `https://tallyno.example` | Marketing site, target of `/` and of the install buttons |
 
-### 1. Clone and install dependencies
-
-```bash
-git clone https://github.com/lehmora/tallyno-web.git
-cd tallyno-web
-make install
-# or npm install
-```
-
-### 2. Start the development server
+## Development
 
 ```bash
-make dev
-# or npm run dev
+pnpm install
+pnpm dev          # http://localhost:3003
+pnpm test         # unit tests (Vitest)
+pnpm typecheck
+pnpm build && node .output/server/index.mjs
 ```
 
-The application will be accessible at `http://localhost:3003` (port configured in `package.json`).
-
-### 3. Build for production
-
-```bash
-make build
-# or npm run build
-```
-
-To locally preview the production build:
-
-```bash
-make preview
-# or npm run preview
-```
-
-## 🤝 Contributing
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-*Managed with Tallyno • Shared expenses without disputes*
+Every response carries `X-Robots-Tag: noindex, nofollow`, `Referrer-Policy: no-referrer`, `Cache-Control: private,
+no-store` and `frame-ancestors 'none'`: recaps contain names and amounts, and the token in the URL is the only access
+control. Upstream errors are mapped to 404, 410 or 502 without the API's URL or message.
